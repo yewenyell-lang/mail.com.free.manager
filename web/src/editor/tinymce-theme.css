@@ -1,0 +1,184 @@
+.tox,
+.tox-tinymce,
+.tox-tinymce-aux {
+  font-family: var(--font-ui) !important;
+  border-radius: 0 !important;
+}
+
+.compose-editor .tox-tinymce {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+  visibility: visible !important;
+}
+
+.compose-editor .tox-editor-container {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+.compose-editor .tox-sidebar-wrap {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+.compose-editor .tox-edit-area {
+  position: relative !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+.compose-editor .tox-edit-area__iframe {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: var(--paper) !important;
+}
+
+.compose-editor .tox-editor-header,
+.compose-editor .tox-menubar,
+.compose-editor .tox-toolbar,
+.compose-editor .tox-toolbar__overflow,
+.compose-editor .tox-toolbar__primary,
+.compose-editor .tox-toolbar-overlord,
+.compose-editor .tox-anchorbar,
+.compose-editor .tox-statusbar {
+  background: var(--ink-2) !important;
+  border-color: var(--line) !important;
+  box-shadow: none !important;
+}
+
+.compose-editor .tox-toolbar__group {
+  border-color: var(--line) !important;
+}
+
+.compose-editor .tox-mbtn,
+.compose-editor .tox-tbtn,
+.compose-editor .tox-split-button,
+.compose-editor .tox-statusbar,
+.compose-editor .tox-statusbar a,
+.compose-editor .tox-statusbar__path-item,
+.compose-editor .tox-statusbar__wordcount,
+.compose-editor .tox-statusbar__branding svg {
+  color: var(--paper) !important;
+  background: transparent !important;
+}
+
+.compose-editor .tox-tbtn svg,
+.compose-editor .tox-mbtn svg,
+.compose-editor .tox-split-button svg,
+.compose-editor .tox-statusbar svg {
+  fill: currentColor !important;
+}
+
+.compose-editor .tox-tbtn:hover,
+.compose-editor .tox-mbtn:hover,
+.compose-editor .tox-mbtn--active,
+.compose-editor .tox-split-button:hover,
+.compose-editor .tox-tbtn--enabled,
+.compose-editor .tox-tbtn:focus,
+.compose-editor .tox-tbtn:active {
+  background: var(--ink-3) !important;
+  color: var(--gold) !important;
+}
+
+.tox-menu,
+.tox-swatches,
+.tox-collection,
+.tox-selected-menu,
+.tox-dialog,
+.tox-dialog__header,
+.tox-dialog__body,
+.tox-dialog__footer,
+.tox-pop,
+.tox-tooltip__body {
+  background: var(--ink-2) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--paper) !important;
+}
+
+.tox-dialog-wrap__backdrop {
+  background: rgba(0, 0, 0, 0.55) !important;
+}
+
+.tox-dialog__title,
+.tox-label,
+.tox-collection__item-label,
+.tox-collection__item-accessory,
+.tox-menu .tox-collection__item,
+.tox-tooltip__body,
+.tox-dialog__body-nav-item {
+  color: var(--paper) !important;
+}
+
+.tox-collection__item--active,
+.tox-collection__item--enabled,
+.tox-dialog__body-nav-item--active {
+  background: var(--ink-3) !important;
+  color: var(--gold) !important;
+}
+
+.tox-textfield,
+.tox-textarea,
+.tox-selectfield select,
+.tox-listboxfield .tox-listbox,
+.tox-toolbar-textfield,
+.tox-number-input,
+.tox-custom-preview {
+  background: var(--ink) !important;
+  color: var(--paper) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+}
+
+.tox-textfield:focus,
+.tox-textarea:focus,
+.tox-selectfield select:focus {
+  border-color: var(--gold) !important;
+}
+
+.tox-button {
+  background: var(--gold) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: #111 !important;
+}
+
+.tox-button--secondary,
+.tox-button--naked {
+  background: transparent !important;
+  border: 1px solid var(--line) !important;
+  color: var(--paper) !important;
+}
+
+.tox-button:hover,
+.tox-button--secondary:hover {
+  filter: brightness(1.08);
+}
+
+.tox-insert-table-picker,
+.tox-insert-table-picker > div {
+  background: var(--ink-2) !important;
+  border-color: var(--line) !important;
+}
+
+.tox-insert-table-picker .tox-insert-table-picker__selected {
+  background: var(--gold) !important;
+  border-color: var(--gold) !important;
+}
+
+.tox-swatch {
+  border-radius: 0 !important;
+}
+
+.tox-icon svg {
+  fill: currentColor;
+}

@@ -1,0 +1,15 @@
+node_modules/
+web/dist/
+web/.vite/
+server/tmp/
+server/bin/
+*.exe
+*.exe~
+server/api.exe
+server/api.log
+*.log
+.env
+.sessions/
+.agent-cli/
+.DS_Store
+Thumbs.db

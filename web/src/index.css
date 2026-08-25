@@ -1,0 +1,222 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #12110e;
+  --ink-2: #1b1a16;
+  --ink-3: #26241e;
+  --paper: #f4efe4;
+  --paper-2: #e7dfd0;
+  --gold: #e8a317;
+  --gold-dim: #b07a10;
+  --seal: #d4522a;
+  --ok: #7cb389;
+  --mute: #c9c2b4;
+  --line: rgba(244, 239, 228, 0.08);
+  --soft: 5px;
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", "Consolas", "Microsoft YaHei UI", "Microsoft YaHei", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+body {
+  background-image:
+    radial-gradient(1200px 500px at 10% -10%, rgba(232, 163, 23, 0.08), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 40%);
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #3a372f;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.grain {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  z-index: 50;
+}
+
+.stamp {
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.ticket {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+}
+
+.paper-frame {
+  background: var(--paper);
+  color: #1a1610;
+  font-family: var(--font-ui);
+}
+
+.letter-stage {
+  background:
+    radial-gradient(900px 420px at 80% 0%, rgba(232, 163, 23, 0.05), transparent 60%),
+    var(--ink);
+}
+
+.letter-sheet {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  background: #fffdf8;
+  color: #1a1610;
+  border-radius: 8px;
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(26, 22, 16, 0.06);
+}
+
+.letter-sheet img {
+  max-width: 100%;
+  height: auto;
+}
+
+.tab-strip {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.toast-banner {
+  animation: toast-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes toast-in {
+  from {
+    transform: translateY(-14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.row-card {
+  border-radius: var(--soft);
+}
+
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(232, 163, 23, 0.18);
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(232, 163, 23, 0.22);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.spinner-sm {
+  width: 13px;
+  height: 13px;
+  border-width: 1.5px;
+}
+
+.spinner-ink {
+  border-color: rgba(0, 0, 0, 0.2);
+  border-top-color: #111;
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.field-input {
+  height: 36px;
+  width: 100%;
+  background: var(--ink);
+  padding: 0 10px;
+  font-size: 13px;
+  outline: none;
+  border: 1px solid var(--line);
+  border-radius: var(--soft);
+}
+
+.field-input:focus {
+  border-color: var(--gold);
+}
+
+.compose-drawer {
+  animation: drawer-in 0.18s ease-out;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(28px);
+    opacity: 0.6;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.compose-editor,
+.compose-editor .tox-tinymce {
+  height: 100% !important;
+}
+
+

@@ -1,0 +1,8 @@
+services:
+  desk:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      PORT: "8787"
+      MAILCOM_PROXY: ${MAILCOM_PROXY:-}
