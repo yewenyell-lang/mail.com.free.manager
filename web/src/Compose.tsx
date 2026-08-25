@@ -280,11 +280,11 @@ export default function Compose({
     }
   }
 
-  const title = mode === "send" ? "撰写" : mode === "reply" ? "回复" : "转发";
+  const title = mode === "send" ? "写信" : mode === "reply" ? "回复" : "转发";
 
   return (
     <div className="fixed inset-0 z-[70] flex justify-end">
-      <button className="h-full flex-1 bg-black/45" aria-label="关闭撰写" onClick={onClose} />
+      <button className="h-full flex-1 bg-black/45" aria-label="关闭写信" onClick={onClose} />
       <aside className="compose-drawer flex h-full w-[min(920px,92vw)] flex-col border-l border-[var(--line)] bg-[var(--ink-2)]">
         <div className="flex shrink-0 items-center justify-between border-b border-[var(--line)] px-5 py-3">
           <div className="stamp text-[13px] text-[var(--gold)]">{title}</div>
@@ -405,7 +405,7 @@ export default function Compose({
           </button>
           <button
             disabled={sending || !ready}
-            className="inline-flex items-center gap-2 bg-[var(--gold)] px-4 py-2 text-black disabled:opacity-70"
+            className="inline-flex items-center gap-2 rounded-[5px] bg-[var(--gold-btn)] px-4 py-2 font-medium text-[var(--on-gold)] disabled:opacity-70"
             onClick={() => void submit()}
           >
             {sending && <span className="spinner spinner-sm spinner-ink" />}

@@ -55,7 +55,9 @@ func New(proxyURL string, webDir string) *gin.Engine {
 
 	if webDir != "" {
 		r.Static("/assets", webDir+"/assets")
+		r.StaticFile("/favicon.svg", webDir+"/favicon.svg")
 		r.StaticFile("/favicon.ico", webDir+"/favicon.ico")
+		r.StaticFile("/apple-touch-icon.png", webDir+"/apple-touch-icon.png")
 		r.NoRoute(func(c *gin.Context) {
 			if strings.HasPrefix(c.Request.URL.Path, "/api/") {
 				c.JSON(http.StatusNotFound, gin.H{"error": "not found"})

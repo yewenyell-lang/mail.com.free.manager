@@ -1,6 +1,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import DOMPurify from "dompurify";
-import { Copy, Inbox, LogIn, LoaderCircle, MailPlus, RefreshCw, Search, Upload } from "lucide-react";
+import { Copy, Inbox, LogIn, LoaderCircle, MailPlus, Monitor, Moon, RefreshCw, Search, Sun, Upload } from "lucide-react";
+import BrandMark from "./BrandMark";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 const Compose = lazy(() => import("./Compose"));
@@ -19,6 +20,7 @@ import {
 import { extractCode } from "./lib/code";
 import { cacheFolderOf, db, recoverAccountsIfEmpty, type AccountRow } from "./lib/db";
 import { parseAccounts } from "./lib/parse";
+import { applyThemePref, cycleTheme, readThemePref, themeLabel, type ThemePref } from "./lib/theme";
 import type { Folder, MailAttachment, MailBox, MailMessage } from "./lib/types";
 
 function mailId(mail: MailMessage) {
@@ -119,6 +121,7 @@ export default function App() {
   const [pickedEmails, setPickedEmails] = useState<Set<string>>(new Set());
   const [box, setBox] = useState<MailBox>("inbox");
   const [accountMenu, setAccountMenu] = useState<{ email: string; x: number; y: number } | null>(null);
+  const [themePref, setThemePref] = useState<ThemePref>(() => readThemePref());
 
   const selected = accounts.find((a) => a.email === selectedEmail);
   const composeAccount = selected || accounts[0];
@@ -160,6 +163,10 @@ export default function App() {
     void recoverAccountsIfEmpty();
   }, []);
 
+  useEffect(() => {
+    applyThemePref(themePref);
+  }, [themePref]);
+
   function ping(message: string) {
     const errorWords = ["失败", "错误", "超过", "不能", "无法", "没有", "先", "不可"];
     const kind = errorWords.some((word) => message.includes(word)) ? "error" : "ok";
@@ -195,12 +202,12 @@ export default function App() {
 
   async function reloginOne(account: AccountRow) {
     setAccountMenu(null);
-    setBusy({ text: `正在重登 ${account.email}`, pane: "global" });
+    setBusy({ text: `正在重新登录 ${account.email}`, pane: "global" });
     try {
       await loginAccount(account, { force: true });
-      ping(`${account.email} 已重登`);
+      ping(`${account.email} 已重新登录`);
     } catch (error) {
-      ping(error instanceof Error ? error.message : "重登失败");
+      ping(error instanceof Error ? error.message : "重新登录失败");
     } finally {
       setBusy(null);
     }
@@ -294,7 +301,7 @@ export default function App() {
       }
     }
 
-    setBusy({ text: `正在取件 ${account.email}`, pane: "mail" });
+    setBusy({ text: `正在收信 ${account.email}`, pane: "mail" });
     if (!opts?.keepSelection) {
       setMails([]);
       setSelectedMail(null);
@@ -349,7 +356,7 @@ export default function App() {
       }
       if (!opts?.quiet) ping(`取到 ${list.length} 封`);
     } catch (error) {
-      ping(error instanceof Error ? error.message : "取件失败");
+      ping(error instanceof Error ? error.message : "收信失败");
     } finally {
       setBusy(null);
     }
@@ -358,12 +365,12 @@ export default function App() {
   async function fetchAll() {
     const targets = pickedAccounts.length ? pickedAccounts : [];
     if (!targets.length) {
-      ping("先勾选要取件的账号");
+      ping("先勾选要收信的账号");
       return;
     }
     const total = targets.length;
     progressRef.current = 0;
-    setBusy({ text: `批量取件 0/${total}`, pane: "global", current: 0, total });
+    setBusy({ text: `批量收信 0/${total}`, pane: "global", current: 0, total });
     await mapPool(targets, 3, async (account) => {
       try {
         const fresh = await db.accounts.get(account.email);
@@ -375,7 +382,7 @@ export default function App() {
       } finally {
         progressRef.current += 1;
         const current = progressRef.current;
-        setBusy({ text: `批量取件 ${current}/${total}`, pane: "global", current, total });
+        setBusy({ text: `批量收信 ${current}/${total}`, pane: "global", current, total });
       }
     });
     setBusy(null);
@@ -383,7 +390,7 @@ export default function App() {
       const cached = await db.mailLists.get([selectedEmail, cacheFolderOf(box)]);
       if (cached) setMails(sortMails((cached.mails as MailMessage[]) || []));
     }
-    ping("批量取件结束");
+    ping("批量收信结束");
   }
 
   async function openMail(mail: MailMessage) {
@@ -562,9 +569,10 @@ export default function App() {
       <div className="grid h-full min-h-0 grid-rows-[56px_1fr]">
         <header className="flex h-12 items-center justify-between border-b border-[var(--line)] px-4">
           <div className="flex items-center gap-3">
-            <div className="stamp text-[13px] text-[var(--gold)]">Sorting Desk</div>
+            <BrandMark size={22} />
+            <div className="stamp text-[13px] text-[var(--gold)]">mail.com</div>
             <div className="h-4 w-px bg-[var(--line)]" />
-            <div className="ticket text-[13px] text-[var(--mute)]">mail.com 分拣台 · 凭证仅存本机</div>
+            <div className="ticket text-[13px] text-[var(--mute)]">批量邮箱管理 · 账号仅保存在本机</div>
           </div>
           <div className="flex items-center gap-2">
             {busy && (
@@ -573,6 +581,12 @@ export default function App() {
                 <span>{busy.text}</span>
               </div>
             )}
+            <TopBtn
+              icon={themePref === "light" ? <Sun size={14} /> : themePref === "dark" ? <Moon size={14} /> : <Monitor size={14} />}
+              onClick={() => setThemePref(cycleTheme(themePref))}
+            >
+              {themeLabel(themePref)}
+            </TopBtn>
             <TopBtn icon={<Upload size={14} />} disabled={!!busy} onClick={() => setImportOpen(true)}>
               导入
             </TopBtn>
@@ -582,7 +596,7 @@ export default function App() {
                   批量登录 {pickedAccounts.length}
                 </TopBtn>
                 <TopBtn icon={<Inbox size={14} />} disabled={!!busy} onClick={fetchAll}>
-                  批量取件 {pickedAccounts.length}
+                  批量收信 {pickedAccounts.length}
                 </TopBtn>
                 <TopBtn disabled={!!busy} onClick={exportAccounts}>
                   导出 {pickedAccounts.length}
@@ -601,10 +615,10 @@ export default function App() {
                 }
                 setComposeOpen("send");
               }}
-              className="inline-flex h-8 items-center gap-1.5 rounded-[5px] bg-[var(--gold)] px-3 text-[13px] text-black disabled:opacity-40"
+              className="inline-flex h-8 items-center gap-1.5 rounded-[5px] bg-[var(--gold-btn)] px-3 text-[13px] font-medium text-[var(--on-gold)] disabled:opacity-40"
             >
               <MailPlus size={14} />
-              撰写
+              写信
             </button>
           </div>
         </header>
@@ -674,7 +688,7 @@ export default function App() {
                         <div className="min-w-0 flex-1">
                           <div className="ticket truncate text-[13px]">{account.email}</div>
                           <div className="mt-1 text-[12px] text-[var(--mute)]">
-                            {rowBusy ? "处理中…" : account.status === "ok" ? "已登录" : account.status === "fail" ? account.lastError : "未校验"}
+                            {rowBusy ? "处理中…" : account.status === "ok" ? "已登录" : account.status === "fail" ? account.lastError : "未登录"}
                           </div>
                         </div>
                       </div>
@@ -720,7 +734,7 @@ export default function App() {
                 <Mini active={box === "inbox"} onClick={() => switchBox("inbox")}>收件</Mini>
                 <Mini active={box === "sent"} onClick={() => switchBox("sent")}>已发送</Mini>
                 <Mini active={box === "trash"} onClick={() => switchBox("trash")}>回收站</Mini>
-                <Mini active={box === "spam"} onClick={() => switchBox("spam")}>垃圾</Mini>
+                <Mini active={box === "spam"} onClick={() => switchBox("spam")}>垃圾箱</Mini>
                 <Mini active={box === "all"} onClick={() => switchBox("all")}>全部</Mini>
               </div>
               <Mini
@@ -774,7 +788,7 @@ export default function App() {
                       星标
                     </Mini>
                     <Mini disabled={!!busy} onClick={() => void act("trash")}>回收站</Mini>
-                    <Mini disabled={!!busy} onClick={() => void act("spam")}>垃圾</Mini>
+                    <Mini disabled={!!busy} onClick={() => void act("spam")}>垃圾箱</Mini>
                     <Mini disabled={!!busy} onClick={() => void act("delete")}>删除</Mini>
                   </>
                 )
@@ -877,9 +891,9 @@ export default function App() {
                   {busy?.pane === "detail" && <LoadingCover text={busy.text} />}
                   {busy?.pane === "detail" ? (
                     <div className="letter-sheet space-y-3 p-8">
-                      <div className="h-4 w-5/6 bg-[#ece6d8]" />
-                      <div className="h-4 w-full bg-[#ece6d8]" />
-                      <div className="h-4 w-2/3 bg-[#ece6d8]" />
+                      <div className="h-4 w-5/6 bg-[var(--paper-2)]" />
+                      <div className="h-4 w-full bg-[var(--paper-2)]" />
+                      <div className="h-4 w-2/3 bg-[var(--paper-2)]" />
                     </div>
                   ) : (
                     <div
@@ -919,7 +933,7 @@ export default function App() {
                     disabled={!!busy}
                     onClick={() => void reloginOne(target)}
                   >
-                    强制重登
+                    重新登录
                   </button>
                   <button
                     className="block w-full px-3 py-1.5 text-left text-[var(--seal)] hover:bg-[var(--ink-3)]"
@@ -952,7 +966,7 @@ export default function App() {
       )}
       {toast && (
         <div
-          className={`toast-banner fixed inset-x-0 top-14 z-[80] mx-auto w-fit rounded-md px-4 py-2.5 text-sm font-medium shadow-[0_10px_30px_rgba(0,0,0,0.45)] ${toast.kind === "error" ? "bg-[var(--seal)] text-white" : "bg-[var(--gold)] text-black"}`}
+          className={`toast-banner fixed inset-x-0 top-14 z-[80] mx-auto w-fit rounded-md px-4 py-2.5 text-sm font-medium shadow-[0_10px_30px_rgba(0,0,0,0.45)] ${toast.kind === "error" ? "bg-[var(--seal)] text-white" : "bg-[var(--gold-btn)] text-[var(--on-gold)]"}`}
         >
           {toast.text}
         </div>
@@ -968,7 +982,7 @@ export default function App() {
           />
           <div className="mt-3 flex justify-end gap-2">
             <Mini onClick={() => setImportOpen(false)}>取消</Mini>
-            <button className="bg-[var(--gold)] px-4 py-2 text-black" onClick={() => void importNow()}>
+            <button className="rounded-[5px] bg-[var(--gold-btn)] px-4 py-2 font-medium text-[var(--on-gold)]" onClick={() => void importNow()}>
               写入本机
             </button>
           </div>
@@ -1027,7 +1041,7 @@ function TopBtn({
 function LoadingCover({ text, light }: { text: string; light?: boolean }) {
   return (
     <div
-      className={`absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 ${light ? "bg-[rgba(244,239,228,0.72)]" : "bg-[rgba(18,17,14,0.72)]"}`}
+      className={`absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 ${light ? "bg-[var(--cover-light)]" : "bg-[var(--cover)]"}`}
     >
       <span className="spinner" />
       <div className={`ticket text-[13px] ${light ? "text-[#6b5c3a]" : "text-[var(--gold)]"}`}>{text}</div>
