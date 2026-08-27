@@ -24,6 +24,9 @@ func main() {
 			}
 		}
 	}
+	if os.Getenv("STATS_FILE") == "" {
+		os.Setenv("STATS_FILE", filepath.Join("tmp", "stats.json"))
+	}
 	engine := api.New(proxy, webDir)
 	log.Printf("listening on :%s proxy=%q web=%q", port, proxy, webDir)
 	if err := engine.Run(":" + port); err != nil {

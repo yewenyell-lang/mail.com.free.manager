@@ -5,12 +5,14 @@ import (
 	"net/http"
 
 	"mailcom/manager/internal/mailcom"
+	"mailcom/manager/internal/stats"
 
 	"github.com/gin-gonic/gin"
 )
 
 type handlers struct {
 	proxyURL string
+	stats    *stats.Store
 }
 
 type sessionIn struct {
@@ -110,14 +112,17 @@ func (h *handlers) login(c *gin.Context) {
 	}
 	client, err := h.client(req.sessionIn)
 	if err != nil {
+		h.stats.MarkLogin(false)
 		writeErr(c, err)
 		return
 	}
 	defer client.Close()
 	if _, err := client.Login(); err != nil {
+		h.stats.MarkLogin(false)
 		writeErr(c, err)
 		return
 	}
+	h.stats.MarkLogin(true)
 	user, _ := client.UserData()
 	c.JSON(http.StatusOK, gin.H{"session": sessionOut(client), "user": user})
 }
@@ -163,6 +168,12 @@ func (h *handlers) list(c *gin.Context) {
 		writeErr(c, err)
 		return
 	}
+	switch result := data.(type) {
+	case mailcom.IncomingResponse:
+		h.stats.AddMailListed(int64(len(result.Mail)))
+	case mailcom.MessagesResponse:
+		h.stats.AddMailListed(int64(len(result.Mail)))
+	}
 	c.JSON(http.StatusOK, gin.H{"session": sessionOut(client), "data": data})
 }
 
@@ -207,6 +218,7 @@ func (h *handlers) body(c *gin.Context) {
 		writeErr(c, err)
 		return
 	}
+	h.stats.MarkMailOpened()
 	c.JSON(http.StatusOK, gin.H{"session": sessionOut(client), "html": html})
 }
 
@@ -272,6 +284,7 @@ func (h *handlers) send(c *gin.Context) {
 		writeErr(c, err)
 		return
 	}
+	h.stats.MarkSend("send")
 	c.JSON(http.StatusOK, gin.H{"session": sessionOut(client), "data": data})
 }
 
@@ -292,6 +305,7 @@ func (h *handlers) reply(c *gin.Context) {
 		writeErr(c, err)
 		return
 	}
+	h.stats.MarkSend("reply")
 	c.JSON(http.StatusOK, gin.H{"session": sessionOut(client), "data": data})
 }
 
@@ -312,6 +326,7 @@ func (h *handlers) forward(c *gin.Context) {
 		writeErr(c, err)
 		return
 	}
+	h.stats.MarkSend("forward")
 	c.JSON(http.StatusOK, gin.H{"session": sessionOut(client), "data": data})
 }
 

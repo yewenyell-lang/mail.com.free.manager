@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
+	"mailcom/manager/internal/stats"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,6 +15,9 @@ func New(proxyURL string, webDir string) *gin.Engine {
 	if os.Getenv("GIN_MODE") == "" {
 		gin.SetMode(gin.ReleaseMode)
 	}
+	store := stats.New(os.Getenv("STATS_FILE"))
+	store.StartAutoSave(30 * time.Second)
+
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(cors())
@@ -23,7 +29,14 @@ func New(proxyURL string, webDir string) *gin.Engine {
 	})
 	r.MaxMultipartMemory = 32 << 20
 
-	h := &handlers{proxyURL: strings.TrimSpace(proxyURL)}
+	h := &handlers{proxyURL: strings.TrimSpace(proxyURL), stats: store}
+	r.Use(func(c *gin.Context) {
+		path := c.Request.URL.Path
+		if strings.HasPrefix(path, "/api/") && !strings.HasPrefix(path, "/api/admin/") {
+			h.stats.HitAPI(path)
+		}
+		c.Next()
+	})
 	api := r.Group("/api")
 	{
 		api.GET("/health", func(c *gin.Context) {
@@ -53,6 +66,10 @@ func New(proxyURL string, webDir string) *gin.Engine {
 		api.POST("/account/user", h.user)
 	}
 
+	admin := r.Group("", h.adminAuth())
+	admin.GET("/admin/stats", h.adminStatsPage)
+	admin.GET("/api/admin/stats", h.adminStatsJSON)
+
 	if webDir != "" {
 		r.Static("/assets", webDir+"/assets")
 		r.StaticFile("/favicon.svg", webDir+"/favicon.svg")
@@ -63,6 +80,7 @@ func New(proxyURL string, webDir string) *gin.Engine {
 				c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 				return
 			}
+			h.stats.HitView(visitorToken(c))
 			c.File(webDir + "/index.html")
 		})
 	}
