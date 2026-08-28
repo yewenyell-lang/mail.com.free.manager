@@ -1,11 +1,12 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import DOMPurify from "dompurify";
-import { Copy, Github, Inbox, LogIn, LoaderCircle, MailPlus, Monitor, Moon, RefreshCw, Search, Sun, Upload } from "lucide-react";
+import { Copy, Github, Inbox, KeyRound, LogIn, LoaderCircle, MailPlus, Monitor, Moon, RefreshCw, Search, Sun, Upload } from "lucide-react";
 import BrandMark from "./BrandMark";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 const Compose = lazy(() => import("./Compose"));
 import {
+  changePassword,
   downloadAttachment,
   getBody,
   getFolders,
@@ -14,6 +15,7 @@ import {
   hasUsableSession,
   loginAccount,
   mapPool,
+  randomMailPassword,
   runAction,
   searchMail,
 } from "./lib/api";
@@ -121,6 +123,9 @@ export default function App() {
   const [pickedEmails, setPickedEmails] = useState<Set<string>>(new Set());
   const [box, setBox] = useState<MailBox>("inbox");
   const [accountMenu, setAccountMenu] = useState<{ email: string; x: number; y: number } | null>(null);
+  const [passwordOpen, setPasswordOpen] = useState<{ emails: string[] } | null>(null);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordRandom, setPasswordRandom] = useState(false);
   const [themePref, setThemePref] = useState<ThemePref>(() => readThemePref());
 
   const selected = accounts.find((a) => a.email === selectedEmail);
@@ -540,6 +545,56 @@ export default function App() {
     ping(`已复制 ${rows.length} 个账号`);
   }
 
+  function openPasswordDialog(emails: string[]) {
+    const unique = [...new Set(emails.filter(Boolean))];
+    if (!unique.length) {
+      ping("先勾选要改密的账号");
+      return;
+    }
+    setAccountMenu(null);
+    setPasswordInput("");
+    setPasswordRandom(false);
+    setPasswordOpen({ emails: unique });
+  }
+
+  async function runPasswordChange() {
+    const emails = passwordOpen?.emails || [];
+    if (!emails.length) return;
+    const shared = passwordInput.trim();
+    if (!passwordRandom && !shared) {
+      ping("填写新密码或勾选每账号随机");
+      return;
+    }
+    if (!window.confirm(`将修改 ${emails.length} 个 mail.com 账号密码，确认继续？`)) return;
+    setPasswordOpen(null);
+    const total = emails.length;
+    progressRef.current = 0;
+    let ok = 0;
+    let fail = 0;
+    setBusy({ text: `批量改密 0/${total}`, pane: "global", current: 0, total });
+    await mapPool(emails, 3, async (email) => {
+      const account = (await db.accounts.get(email)) || accounts.find((item) => item.email === email);
+      try {
+        if (!account) throw new Error("账号不存在");
+        const next = passwordRandom ? randomMailPassword(account.password) : shared;
+        if (!next || next === account.password) throw new Error("新密码不能与旧密码相同");
+        if (next.length < 12) throw new Error("新密码至少 12 位");
+        await changePassword(account, next);
+        ok += 1;
+      } catch (error) {
+        fail += 1;
+        const message = error instanceof Error ? error.message : "改密失败";
+        if (account) await db.accounts.update(account.email, { lastError: message });
+      } finally {
+        progressRef.current += 1;
+        const current = progressRef.current;
+        setBusy({ text: `批量改密 ${current}/${total}`, pane: "global", current, total });
+      }
+    });
+    setBusy(null);
+    ping(`改密结束：成功 ${ok} / 失败 ${fail}`);
+  }
+
   async function removeAccounts(emails: string[]) {
     const unique = [...new Set(emails.filter(Boolean))];
     if (!unique.length) return;
@@ -607,6 +662,9 @@ export default function App() {
                 </TopBtn>
                 <TopBtn icon={<Inbox size={14} />} disabled={!!busy} onClick={fetchAll}>
                   批量收信 {pickedAccounts.length}
+                </TopBtn>
+                <TopBtn icon={<KeyRound size={14} />} disabled={!!busy} onClick={() => openPasswordDialog(pickedAccounts.map((item) => item.email))}>
+                  改密 {pickedAccounts.length}
                 </TopBtn>
                 <TopBtn disabled={!!busy} onClick={exportAccounts}>
                   导出 {pickedAccounts.length}
@@ -946,6 +1004,13 @@ export default function App() {
                     重新登录
                   </button>
                   <button
+                    className="block w-full px-3 py-1.5 text-left hover:bg-[var(--ink-3)]"
+                    disabled={!!busy}
+                    onClick={() => openPasswordDialog([target.email])}
+                  >
+                    修改密码
+                  </button>
+                  <button
                     className="block w-full px-3 py-1.5 text-left text-[var(--seal)] hover:bg-[var(--ink-3)]"
                     disabled={!!busy}
                     onClick={() => void removeAccounts([target.email])}
@@ -980,6 +1045,32 @@ export default function App() {
         >
           {toast.text}
         </div>
+      )}
+
+      {passwordOpen && (
+        <Modal title={`修改密码 · ${passwordOpen.emails.length} 个账号`} onClose={() => setPasswordOpen(null)}>
+          <div className="space-y-3 text-[13px]">
+            <div className="text-[var(--mute)]">会改 mail.com 账号密码，成功后只写回本机密码，保留现有登录态。</div>
+            <label className="flex items-center gap-2 text-[var(--mute)]">
+              <input type="checkbox" checked={passwordRandom} onChange={(e) => setPasswordRandom(e.target.checked)} />
+              每账号随机新密码
+            </label>
+            <input
+              type="text"
+              value={passwordInput}
+              disabled={passwordRandom}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder={passwordRandom ? "已启用随机生成" : "整批统一新密码，至少 12 位"}
+              className="h-9 w-full rounded-[5px] border border-[var(--line)] bg-[var(--ink)] px-3 ticket text-[13px] outline-none disabled:opacity-40"
+            />
+            <div className="flex justify-end gap-2">
+              <Mini onClick={() => setPasswordOpen(null)}>取消</Mini>
+              <button className="rounded-[5px] bg-[var(--gold-btn)] px-4 py-2 font-medium text-[var(--on-gold)]" onClick={() => void runPasswordChange()}>
+                确认改密
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {importOpen && (

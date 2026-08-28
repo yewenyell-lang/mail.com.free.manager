@@ -153,6 +153,54 @@ export async function getAliases(account: AccountRow) {
   return json.data?.mailaddresslist || [];
 }
 
+export function randomMailPassword(oldPassword = "") {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghijkmnopqrstuvwxyz";
+  const digits = "23456789";
+  const pool = lower + digits;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const len = 12 + Math.floor(Math.random() * 5);
+    const rest = [lower[Math.floor(Math.random() * lower.length)], digits[Math.floor(Math.random() * digits.length)]];
+    while (rest.length < len - 1) rest.push(pool[Math.floor(Math.random() * pool.length)]);
+    for (let i = rest.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rest[i], rest[j]] = [rest[j], rest[i]];
+    }
+    const password = upper[Math.floor(Math.random() * upper.length)] + rest.join("");
+    if (password !== oldPassword) return password;
+  }
+  return `A${Date.now().toString(36).slice(-9)}`;
+}
+
+export async function changePassword(account: AccountRow, newPassword: string) {
+  const ctrl = new AbortController();
+  const timer = window.setTimeout(() => ctrl.abort(), 120000);
+  try {
+    const res = await fetch("/api/account/password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(sessionBody(account, { newPassword })),
+      signal: ctrl.signal,
+    });
+    const json = (await res.json()) as Envelope<never>;
+    if (!res.ok) {
+      throw new Error(json.error || `${res.status}`);
+    }
+    await db.accounts.update(account.email, { password: newPassword, lastError: "" });
+  } catch (error) {
+    const message =
+      error instanceof DOMException && error.name === "AbortError"
+        ? "改密超时"
+        : error instanceof Error
+          ? error.message
+          : String(error);
+    await db.accounts.update(account.email, { lastError: message });
+    throw new Error(message);
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
 export async function mapPool<T>(items: T[], limit: number, worker: (item: T, index: number) => Promise<void>) {
   let next = 0;
   const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {

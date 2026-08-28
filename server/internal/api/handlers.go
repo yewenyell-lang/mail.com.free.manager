@@ -69,6 +69,11 @@ type actionReq struct {
 	MailIDs []string `json:"mailIds"`
 }
 
+type passwordReq struct {
+	sessionIn
+	NewPassword string `json:"newPassword"`
+}
+
 func (h *handlers) client(in sessionIn) (*mailcom.Client, error) {
 	return mailcom.New(mailcom.Options{
 		Email:        in.Email,
@@ -407,6 +412,19 @@ func (h *handlers) aliases(c *gin.Context) {
 }
 func (h *handlers) user(c *gin.Context) {
 	h.accountJSON(c, func(client *mailcom.Client) (any, error) { return client.UserData() })
+}
+
+func (h *handlers) changePassword(c *gin.Context) {
+	var req passwordReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := mailcom.ChangePassword(req.Email, req.Password, req.NewPassword, h.proxyURL); err != nil {
+		writeErr(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 func (h *handlers) accountJSON(c *gin.Context, fn func(*mailcom.Client) (any, error)) {

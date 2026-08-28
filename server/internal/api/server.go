@@ -64,6 +64,7 @@ func New(proxyURL string, webDir string) *gin.Engine {
 		api.POST("/account/quota", h.quota)
 		api.POST("/account/aliases", h.aliases)
 		api.POST("/account/user", h.user)
+		api.POST("/account/password", h.changePassword)
 	}
 
 	admin := r.Group("", h.adminAuth())
