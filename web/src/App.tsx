@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import DOMPurify from "dompurify";
-import { Copy, Inbox, LogIn, LoaderCircle, MailPlus, Monitor, Moon, RefreshCw, Search, Sun, Upload } from "lucide-react";
+import { Copy, Github, Inbox, LogIn, LoaderCircle, MailPlus, Monitor, Moon, RefreshCw, Search, Sun, Upload } from "lucide-react";
 import BrandMark from "./BrandMark";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
@@ -581,6 +581,16 @@ export default function App() {
                 <span>{busy.text}</span>
               </div>
             )}
+            <a
+              href="https://github.com/yewenyell-lang/mail.com.free.manager"
+              target="_blank"
+              rel="noreferrer"
+              title="开源地址"
+              className="inline-flex h-8 items-center gap-1.5 rounded-[5px] border border-[var(--line)] px-3 text-[13px] text-[var(--mute)] hover:border-[var(--gold)] hover:text-[var(--gold)]"
+            >
+              <Github size={14} />
+              GitHub
+            </a>
             <TopBtn
               icon={themePref === "light" ? <Sun size={14} /> : themePref === "dark" ? <Moon size={14} /> : <Monitor size={14} />}
               onClick={() => setThemePref(cycleTheme(themePref))}
